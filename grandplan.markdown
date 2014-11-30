@@ -5,6 +5,7 @@ LaTeX to html+Mathjax with kind css conversion
 Order of operations
 -------------------
   1. Extract title
+      # Done
   2. Separate preamble and body
   3. Extract macros from the preamble
   4. Handle title

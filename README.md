@@ -12,3 +12,8 @@ fundamental assumptions:
     3. You want to be able to manipulate things like Theorem environments with css
 
 This is the very beginning, and very much in development.
+
+Implementation
+--------------
+
+This is implemented in python, similar to mse2wp.
