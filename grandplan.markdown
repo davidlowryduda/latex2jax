@@ -9,15 +9,20 @@ Order of operations
   2. Separate preamble and body
       # DONE
   3. Extract macros from the preamble
+      * Implement later
   4. Handle title
     - window name should incorporate title
     - make title heading h1
+      * Extracted, ready for formatting in site
   5. Handle macros
     - place in invisible div for Mathjax
     - see "Macros div" below
+      * Implement later
   6. Handle the body. Everything below is for the body.
   7. Remove extra space and lines
+      # DONE
   8. Swap escape sequences `\$`, `\%`, `\&`, and `<`, `>`
+      # DONE
   9. Swap manual newlines `\\`, spaces `\ `, and accents
   10. Swap fontstyles `\em`, `bf`, etc.
   11. Convert text tables into html tables
