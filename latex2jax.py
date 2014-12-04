@@ -68,8 +68,8 @@ ESC = [
 def reformat_escapes(body):
     """Swaps \$, \%, \&, <, > for placeholders, to be handled later"""
     for e in ESC:
-        body.replace(e[0], e[1])
-    return True
+        body = body.replace(e[0], e[1])
+    return body
 
 ACCENTS = [
     #["\\\\","<br/>\n"],
@@ -104,7 +104,7 @@ def reformat_accents(body):
     """Replace TeX flavored accents with HTML compatible accents"""
     for s1, s2 in ACCENTS:
         body = body.replace(s1, s2)
-    return True
+    return body
 
 fontstyle = {
   r'{\em ' : 'em',
@@ -116,10 +116,27 @@ fontstyle = {
   r'\emph{' : 'em',
   r'\textbf{' : 'b',
 }
+#TODO reformat_fontstyles
 def reformat_fontstyles(body):
     """Replace TeX fontstyles with HTML fontstyles"""
     pass
 
+#TODO reformat_subsections
+def reformat_sections(body):
+    """Replaces sections, subsections, and subsubsections with html"""
+    pass
+
+#TODO enclose_math_environments
+def separate_math(body):
+    """Returns math, text split in body"""
+    math_re = re.compile(r"\$+.*?\$+" +
+                         r"|\\begin\\{equation*?}.*?\\end\\{equation*?}" +
+                         r"|\\begin\\{align*?}.*?\\end\\{align*?}" +
+                         r"|\\\[.*?\\\]"
+                         )
+    math = math_re.findall(body)
+    text = math_re.split(body)
+    return math, text
 
 
 
@@ -145,16 +162,27 @@ def driver():
     title = extract_title(text)
     print title
 
+    text = reformat_escapes(text)
+    text = reformat_accents(text)
+
     text = clean_whitespace(text)
     preamble, body = separate_body(text)
 
-    reformat_escapes(text)
-    reformat_accents(text)
+
+    math, body = separate_math(body)
+
+    math = [str(m) for m in math]
+    math = "\n".join(math)
+    body = [str(t) for t in body]
+    body = "\n".join(body)
 
 
 
     out = open(outputfile, "w")
-    out.write(title + "\n\n" + preamble + "\n\n" + body)
+    #out.write(title + "\n\n" + preamble + "\n\n" + body)
+    out.write(title + "\n\n" + preamble + "\n\n")
+    out.write(math)
+    out.write(body)
     out.close()
     print "The output is now in " + str(outputfile)
 

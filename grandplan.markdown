@@ -24,6 +24,7 @@ Order of operations
   8. Swap escape sequences `\$`, `\%`, `\&`, and `<`, `>`
       # DONE
   9. Swap manual newlines `\\`, spaces `\ `, and accents
+      * Partially done. Accents handled.
   10. Swap fontstyles `\em`, `bf`, etc.
   11. Convert text tables into html tables
     - Completely inessential, low priority of implementation
