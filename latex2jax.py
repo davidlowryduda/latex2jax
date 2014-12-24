@@ -17,7 +17,6 @@ ThmEnvs = [
 ]
 
 
-
 def extract_title(textbody):
     """
     Returns the title of the .tex file, assuming that the
@@ -65,11 +64,24 @@ ESC = [
     [">","_greater_",">","&gt;"],
     ["<","_lesser_","<","&lt;"]
 ]
-def reformat_escapes(body):
+def reformat_escapes_prelim(body):
     """Swaps \$, \%, \&, <, > for placeholders, to be handled later"""
     for e in ESC:
         body = body.replace(e[0], e[1])
     return body
+
+def reformat_escapes_text(body):
+    """Swaps the ESC placeholders in the text document."""
+    for e in ESC:
+        body = body.replace(e[1], e[2])
+    return body
+
+def reformat_escapes_math(math_piaces):
+    """Swaps the ESC placeholders in the math document."""
+    for e in ESC:
+        body = body.replace(e[1], e[3])
+    return body
+
 
 ACCENTS = [
     #["\\\\","<br/>\n"],
@@ -130,10 +142,10 @@ def reformat_sections(body):
 def separate_math(body):
     """Returns math, text split in body"""
     math_re = re.compile(r"\$+.*?\$+" +
-                         r"|\\begin\\{equation*?}.*?\\end\\{equation*?}" +
-                         r"|\\begin\\{align*?}.*?\\end\\{align*?}" +
-                         r"|\\\[.*?\\\]"
-                         )
+                         r"|\\begin\{equation*?\}.*?\\end\{equation*?\}" +
+                         r"|\\begin\{align*?\}.*?\\end\{align*?\}" +
+                         r"|\\\[.*?\\\]",
+                         flags=re.DOTALL)
     math = math_re.findall(body)
     text = math_re.split(body)
     return math, text
@@ -162,7 +174,7 @@ def driver():
     title = extract_title(text)
     print title
 
-    text = reformat_escapes(text)
+    text = reformat_escapes_prelim(text)
     text = reformat_accents(text)
 
     text = clean_whitespace(text)
@@ -170,21 +182,47 @@ def driver():
 
 
     math, body = separate_math(body)
+    print math
+    print body
 
     math = [str(m) for m in math]
-    math = "\n".join(math)
+#    math = "\n".join(math)
     body = [str(t) for t in body]
-    body = "\n".join(body)
+#    body = "\n".join(body)
+
+    # Reconcatenate the text with placeholders for math.
+    text = body[0]
+    for i in range(len(math)):
+        text = text + "__math"+str(i)+"__" + body[i+1]
+
+    debug_out = open("debugger.txt", "w")
+    debug_out.write(text)
+
+    # Handle theorem environments, I suppose.
+
+    #Handle Math
+    #Handle Text
 
 
+
+
+    # Replace math into text
+    for i in range(len(math)):
+        text = text.replace("__math"+str(i)+"__", math[i])
 
     out = open(outputfile, "w")
     #out.write(title + "\n\n" + preamble + "\n\n" + body)
     out.write(title + "\n\n" + preamble + "\n\n")
-    out.write(math)
-    out.write(body)
+#    out.write(math)
+#    out.write(body)
+    out.write(text)
+
+
+
+
     out.close()
     print "The output is now in " + str(outputfile)
+
 
 
 
