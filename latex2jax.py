@@ -17,7 +17,7 @@ def extract_title(textbody):
     return "TITLE"
 
 def clean_whitespace(textbody):
-    """Removes excess whitespaces and comments"""
+    """Removes excess whitespaces, comments, and maketitle, toc"""
     comment_re = re.compile("%.*?$", re.MULTILINE)
     textbody = comment_re.sub("", textbody)
 
@@ -29,6 +29,9 @@ def clean_whitespace(textbody):
 
     multi_returns_re = re.compile(r"\n\n+")
     textbody = multi_returns_re.sub(r"\n\n", textbody)
+
+    titletoc_re = re.compile(r"\\maketitle\s*|\\tableofcontents\s*")
+    textbody = titletoc_re.sub("", textbody)
 
     return textbody
 
@@ -130,8 +133,8 @@ def reformat_sections(body):
 def separate_math(body):
     """Returns math, text split in body"""
     math_re = re.compile(r"\$+.*?\$+" +
-                         r"|\\begin\{equation*?\}.*?\\end\{equation*?\}" +
-                         r"|\\begin\{align*?\}.*?\\end\{align*?\}" +
+                         r"|\\begin\{equation\*?\}.*?\\end\{equation\*?\}" +
+                         r"|\\begin\{align\*?\}.*?\\end\{align\*?\}" +
                          r"|\\\[.*?\\\]",
                          flags=re.DOTALL)
     math = math_re.findall(body)
@@ -147,21 +150,26 @@ ThmEnvs = [
     "claim",
     "remark",
     "example",
-    "exercise"
+    "exercise",
+    "proof"
 ]
-def handle_theorem_environments(body):
+def handle_environments(body):
     """Handles the theorem environments in body"""
     envs_re = re.compile(r"\\begin\{\w+}" +
-                                 r"|\\end\{\w+}")
+                         r"|\\end\{\w+}" +
+                         r"|\\section\*?\s*\{.*?}" +
+                         r"|\\subsection\*?\s*\{.*?}" +
+                         r"|\\subsubsection\*?\s*\{.*?}")
     backbody = envs_re.split(body)
     env_flags = envs_re.findall(body)
     text = backbody[0]
     i = 0
     while i < len(env_flags):
         found = False
+
         for ThmEnv in ThmEnvs:
             if env_flags[i].find("{"+ThmEnv+"}") != -1:
-                print "Found " + ThmEnv, env_flags[i]
+                #print "Found " + ThmEnv, env_flags[i]
                 found = True
                 if env_flags[i].find("begin") != -1:
                     text = text + add_open_theorem_div(ThmEnv)
@@ -169,8 +177,33 @@ def handle_theorem_environments(body):
                     text = text + "</div>\n"
                 else:
                     print "Error! Type ENVFLAG"
+
+        if env_flags[i].find("{itemize}") != -1:
+            text = text + convert_itemize(env_flags[i])
+            found = True
+        elif env_flags[i].find("{enumerate}") != -1:
+            text = text + convert_enum(env_flags[i])
+            found = True
+        elif env_flags[i][0:5] == "\\item":
+            text = text + "<li>"
+            found = True
+        elif env_flags[i].find("\\subsubsection") != -1:
+            text = text + convert_subsubsection(env_flags[i])
+            found = True
+        elif env_flags[i].find("\\subsection") != -1:
+            text = text + convert_subsection(env_flags[i])
+            found = True
+        elif env_flags[i].find("\\section") != -1:
+            text = text + convert_section(env_flags[i])
+            found = True
+        else:
+            if not found:
+                print "Error! Type ENVFLAG2"
+                print env_flags[i]
+
         if not found:
             text = text + env_flags[i]
+
         text += backbody[i+1]
         i += 1
     return text
@@ -178,6 +211,35 @@ def handle_theorem_environments(body):
 def add_open_theorem_div(theorem_type):
     open_div = '\n<div class="'+theorem_type+'">'
     return open_div
+
+def convert_itemize(m):
+    """{itemize} --> <ul> ... </ul>"""
+    if m.find("begin") != -1 :
+        return ("<ul>")
+    else :
+        return ("</ul>")
+
+def convert_enum(m):
+    """{enumerate} --> <ol> ... </ol>"""
+    if m.find("begin") != -1 :
+        return ("<ol>")
+    else :
+        return ("</ol>")
+
+def convert_section(m):
+    braces = re.compile(r"\{|}")
+    section_name = braces.split(m)[1]
+    return "<h2>" + section_name + "</h2>"
+
+def convert_subsection(m):
+    braces = re.compile(r"\{|}")
+    section_name = braces.split(m)[1]
+    return "<h3>" + section_name + "</h3>"
+
+def convert_subsubsection(m):
+    braces = re.compile(r"\{|}")
+    section_name = braces.split(m)[1]
+    return "<h4>" + section_name + "</h4>"
 
 def driver():
     inputfile = "input.tex"
@@ -199,7 +261,7 @@ def driver():
     f.close()
 
     title = extract_title(text)
-    print title
+#    print title
 
     text = reformat_escapes_prelim(text)
     text = reformat_accents(text)
@@ -222,11 +284,11 @@ def driver():
     for i in range(len(math)):
         text = text + "__math"+str(i)+"__" + body[i+1]
 
-    debug_out = open("debugger.txt", "w")
-    debug_out.write(text)
+#    debug_out = open("debugger.txt", "w")
+#    debug_out.write(text)
 
     # Handle theorem environments, I suppose.
-    text = handle_theorem_environments(text)
+    text = handle_environments(text)
 
     debug_out2 = open("postdebugger.txt", "w")
     debug_out2.write(text)
