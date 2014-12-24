@@ -67,11 +67,11 @@ def reformat_escapes_text(body):
         body = body.replace(e[1], e[2])
     return body
 
-def reformat_escapes_math(math_piaces):
+def reformat_escapes_math(math_piece):
     """Swaps the ESC placeholders in the math document."""
     for e in ESC:
-        body = body.replace(e[1], e[3])
-    return body
+        math_piece = math_piece.replace(e[1], e[3])
+    return math_piece
 
 
 ACCENTS = [
@@ -289,12 +289,12 @@ def driver():
 
     # Handle theorem environments, I suppose.
     text = handle_environments(text)
+    text = reformat_escapes_text(text)
+    math = [reformat_escapes_math(piece) for piece in math]
 
     debug_out2 = open("postdebugger.txt", "w")
     debug_out2.write(text)
 
-    #Handle Math
-    #Handle Text
 
 
 
