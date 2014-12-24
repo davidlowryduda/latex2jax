@@ -31,11 +31,13 @@ Now some begin, end bits. Here is an itemize.
 \end{itemize}
 
 And we conclude the following theorem
-\begin{theorem}
+
+<div class="theorem">
   For all __math3__ in __math4__, there is __math5__ such that
   __math6__
   is true.
-\end{theorem}
+</div>
+
 
 hihihi hihi
 

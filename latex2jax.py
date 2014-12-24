@@ -3,18 +3,6 @@
 import re
 from sys import argv
 
-# list of theorem-like environments
-ThmEnvs = [
-    "theorem",
-    "definition",
-    "lemma",
-    "proposition",
-    "corollary",
-    "claim",
-    "remark",
-    "example",
-    "exercise"
-]
 
 
 def extract_title(textbody):
@@ -150,7 +138,46 @@ def separate_math(body):
     text = math_re.split(body)
     return math, text
 
+ThmEnvs = [
+    "theorem",
+    "definition",
+    "lemma",
+    "proposition",
+    "corollary",
+    "claim",
+    "remark",
+    "example",
+    "exercise"
+]
+def handle_theorem_environments(body):
+    """Handles the theorem environments in body"""
+    envs_re = re.compile(r"\\begin\{\w+}" +
+                                 r"|\\end\{\w+}")
+    backbody = envs_re.split(body)
+    env_flags = envs_re.findall(body)
+    text = backbody[0]
+    i = 0
+    while i < len(env_flags):
+        found = False
+        for ThmEnv in ThmEnvs:
+            if env_flags[i].find("{"+ThmEnv+"}") != -1:
+                print "Found " + ThmEnv, env_flags[i]
+                found = True
+                if env_flags[i].find("begin") != -1:
+                    text = text + add_open_theorem_div(ThmEnv)
+                elif env_flags[i].find("end") != -1:
+                    text = text + "</div>\n"
+                else:
+                    print "Error! Type ENVFLAG"
+        if not found:
+            text = text + env_flags[i]
+        text += backbody[i+1]
+        i += 1
+    return text
 
+def add_open_theorem_div(theorem_type):
+    open_div = '\n<div class="'+theorem_type+'">'
+    return open_div
 
 def driver():
     inputfile = "input.tex"
@@ -182,8 +209,8 @@ def driver():
 
 
     math, body = separate_math(body)
-    print math
-    print body
+#    print math
+#    print body
 
     math = [str(m) for m in math]
 #    math = "\n".join(math)
@@ -199,6 +226,10 @@ def driver():
     debug_out.write(text)
 
     # Handle theorem environments, I suppose.
+    text = handle_theorem_environments(text)
+
+    debug_out2 = open("postdebugger.txt", "w")
+    debug_out2.write(text)
 
     #Handle Math
     #Handle Text
