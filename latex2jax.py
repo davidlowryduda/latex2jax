@@ -174,7 +174,7 @@ def handle_environments(body):
                 if env_flags[i].find("begin") != -1:
                     text = text + add_open_theorem_div(ThmEnv)
                 elif env_flags[i].find("end") != -1:
-                    text = text + "</div>\n"
+                    text = text + "</div>\n\n"
                 else:
                     print "Error! Type ENVFLAG"
 
@@ -209,22 +209,22 @@ def handle_environments(body):
     return text
 
 def add_open_theorem_div(theorem_type):
-    open_div = '\n<div class="'+theorem_type+'">'
+    open_div = '\n\n<div class="'+theorem_type+'">'
     return open_div
 
 def convert_itemize(m):
     """{itemize} --> <ul> ... </ul>"""
     if m.find("begin") != -1 :
-        return ("<ul>")
+        return ("\n\n<ul>")
     else :
-        return ("</ul>")
+        return ("</ul>\n\n")
 
 def convert_enum(m):
     """{enumerate} --> <ol> ... </ol>"""
     if m.find("begin") != -1 :
-        return ("<ol>")
+        return ("\n\n<ol>")
     else :
-        return ("</ol>")
+        return ("</ol>\n\n")
 
 def convert_section(m):
     braces = re.compile(r"\{|}")
@@ -240,6 +240,19 @@ def convert_subsubsection(m):
     braces = re.compile(r"\{|}")
     section_name = braces.split(m)[1]
     return "<h4>" + section_name + "</h4>"
+
+def place_p_tags(body): #TODO docstring
+    multi_returns_re = re.compile(r"\n\n+")
+    body_pieces = multi_returns_re.split(body)
+    text = ""
+    for piece in body_pieces:
+        if piece and piece[0] != "<":
+            text += "\n\n<p>\n" + piece + "\n</p>\n\n"
+        else:
+            text += piece
+    text = multi_returns_re.sub(r"\n\n", text)
+    return text
+
 
 def driver():
     inputfile = "input.tex"
@@ -291,13 +304,10 @@ def driver():
     text = handle_environments(text)
     text = reformat_escapes_text(text)
     math = [reformat_escapes_math(piece) for piece in math]
+    text = place_p_tags(text)
 
     debug_out2 = open("postdebugger.txt", "w")
     debug_out2.write(text)
-
-
-
-
 
     # Replace math into text
     for i in range(len(math)):
