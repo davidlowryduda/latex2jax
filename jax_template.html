@@ -1,0 +1,41 @@
+<html>
+    <head>
+        <title> __TITLE </title>
+        <meta name="tags" content=__TAGS />
+        <meta name="date" content=__DATE />
+        <meta name="category" content=__CATEGORY />
+        <meta name="slug" content=__SLUG />
+        <meta name="author" content=__AUTHOR />
+        <meta name="summary" content=__SUMMARY />
+    </head>
+    <body>
+        <script type="text/x-mathjax-config">
+            MathJax.Hub.Config({
+                extensions: ["tex2jax.js", "color.js", "AMSmath.js", "AMSsymbols.js"],
+                jax: ["input/TeX", "output/HTML-CSS"],
+                tex2jax: {
+                    inlineMath: [ ['$', '$'], ['$latex', '$'], ['\\(', '\\)'] ],
+                    displayMath: [ ['$$', '$$'], ['\\[', '\\]'] ],
+                    processEscapes: true,
+                    processRefs: true,
+                    processEnvironments: true
+                },
+                TeX: {
+                    <!-- __MACROS
+                    Macros: {
+                        RR: '{\\bf R}'
+                    },
+                    -->
+                    equationNumbers: {autoNumber: "AMS"}
+                },
+                "HTML-CSS": {availableFonts: ["TeX"] }
+            });
+        </script>
+        <script type="text/javascript"
+            src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+        </script>
+
+    __CONTENT
+
+    </body>
+</html>
