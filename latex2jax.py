@@ -5,6 +5,7 @@ from sys import argv
 
 
 
+
 def extract_title(textbody):
     """
     Returns the title of the .tex file, assuming that the
@@ -15,6 +16,12 @@ def extract_title(textbody):
     if title:
         return title[0]
     return "TITLE"
+
+def clean_extra_newlines(textbody):
+    """Removes excess newlines"""
+    multi_returns_re = re.compile(r"\n\n+")
+    textbody = multi_returns_re.sub(r"\n\n", textbody)
+    return textbody
 
 def clean_whitespace(textbody):
     """Removes excess whitespaces, comments, and maketitle, toc"""
@@ -27,8 +34,7 @@ def clean_whitespace(textbody):
     end_re = re.compile(r"\\end\s*")
     textbody = end_re.sub(r"\\end", textbody)
 
-    multi_returns_re = re.compile(r"\n\n+")
-    textbody = multi_returns_re.sub(r"\n\n", textbody)
+    textbody = clean_extra_newlines(textbody)
 
     titletoc_re = re.compile(r"\\maketitle\s*|\\tableofcontents\s*")
     textbody = titletoc_re.sub("", textbody)
@@ -159,13 +165,15 @@ def handle_environments(body):
                          r"|\\end\{\w+}" +
                          r"|\\section\*?\s*\{.*?}" +
                          r"|\\subsection\*?\s*\{.*?}" +
-                         r"|\\subsubsection\*?\s*\{.*?}")
+                         r"|\\subsubsection\*?\s*\{.*?}" +
+                         r"|\\item")
     backbody = envs_re.split(body)
     env_flags = envs_re.findall(body)
     text = backbody[0]
     i = 0
     while i < len(env_flags):
         found = False
+        in_list = False
 
         for ThmEnv in ThmEnvs:
             if env_flags[i].find("{"+ThmEnv+"}") != -1:
@@ -184,9 +192,14 @@ def handle_environments(body):
         elif env_flags[i].find("{enumerate}") != -1:
             text = text + convert_enum(env_flags[i])
             found = True
+#        elif re.findall(r"^\w*\\item", env_flags[i], flags=re.MULTILINE):
+#            print "found"
+#            text = text + "<li>"
+#            found = True
         elif env_flags[i][0:5] == "\\item":
             text = text + "<li>"
             found = True
+            in_list = True
         elif env_flags[i].find("\\subsubsection") != -1:
             text = text + convert_subsubsection(env_flags[i])
             found = True
@@ -204,7 +217,12 @@ def handle_environments(body):
         if not found:
             text = text + env_flags[i]
 
-        text += backbody[i+1]
+        if not in_list:
+            text += backbody[i+1]
+        else:
+            text += backbody[i+1].rstrip()
+            text += " </li>\n"
+
         i += 1
     return text
 
@@ -253,6 +271,15 @@ def place_p_tags(body): #TODO docstring
     text = multi_returns_re.sub(r"\n\n", text)
     return text
 
+def insert_header(body): #TODO docstring
+    f = open("jax_template.html")
+    base = f.read()
+    f.close()
+    content_re = re.compile("__CONTENT")
+    text = content_re.sub(body, base)
+    return text
+
+
 
 def driver():
     inputfile = "input.tex"
@@ -282,7 +309,6 @@ def driver():
     text = clean_whitespace(text)
     preamble, body = separate_body(text)
 
-
     math, body = separate_math(body)
 #    print math
 #    print body
@@ -306,8 +332,11 @@ def driver():
     math = [reformat_escapes_math(piece) for piece in math]
     text = place_p_tags(text)
 
-    debug_out2 = open("postdebugger.txt", "w")
-    debug_out2.write(text)
+    text = insert_header(text)
+    text = clean_extra_newlines(text)
+
+#    debug_out2 = open("postdebugger.txt", "w")
+#    debug_out2.write(text)
 
     # Replace math into text
     for i in range(len(math)):
@@ -315,13 +344,10 @@ def driver():
 
     out = open(outputfile, "w")
     #out.write(title + "\n\n" + preamble + "\n\n" + body)
-    out.write(title + "\n\n" + preamble + "\n\n")
+    #out.write(title + "\n\n" + preamble + "\n\n")
 #    out.write(math)
 #    out.write(body)
     out.write(text)
-
-
-
 
     out.close()
     print "The output is now in " + str(outputfile)
