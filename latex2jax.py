@@ -59,7 +59,8 @@ ESC = [
     ["\\%","_percent_","&#37;","\\%"],
     ["\\&","_amp_","&amp;","\\&"],
     [">","_greater_",">","&gt;"],
-    ["<","_lesser_","<","&lt;"]
+    ["<","_lesser_","<","&lt;"],
+    [r"\\", "_linebreak_", "<br>", r"\\\\"]
 ]
 def reformat_escapes_prelim(body):
     """Swaps \$, \%, \&, <, > for placeholders, to be handled later"""
@@ -177,14 +178,14 @@ def handle_environments(body):
 
         for ThmEnv in ThmEnvs:
             if env_flags[i].find("{"+ThmEnv+"}") != -1:
-                #print "Found " + ThmEnv, env_flags[i]
+                #print("Found " + ThmEnv, env_flags[i])
                 found = True
                 if env_flags[i].find("begin") != -1:
                     text = text + add_open_theorem_div(ThmEnv)
                 elif env_flags[i].find("end") != -1:
                     text = text + "</div>\n\n"
                 else:
-                    print "Error! Type ENVFLAG"
+                    print("Error! Type ENVFLAG")
 
         if env_flags[i].find("{itemize}") != -1:
             text = text + convert_itemize(env_flags[i])
@@ -193,7 +194,7 @@ def handle_environments(body):
             text = text + convert_enum(env_flags[i])
             found = True
 #        elif re.findall(r"^\w*\\item", env_flags[i], flags=re.MULTILINE):
-#            print "found"
+#            print("found")
 #            text = text + "<li>"
 #            found = True
         elif env_flags[i][0:5] == "\\item":
@@ -211,8 +212,8 @@ def handle_environments(body):
             found = True
         else:
             if not found:
-                print "Error! Type ENVFLAG2"
-                print env_flags[i]
+                print("Error! Type ENVFLAG2")
+                print(env_flags[i])
 
         if not found:
             text = text + env_flags[i]
@@ -301,7 +302,7 @@ def driver():
     f.close()
 
     title = extract_title(text)
-#    print title
+#    print(title)
 
     text = reformat_escapes_prelim(text)
     text = reformat_accents(text)
@@ -310,8 +311,8 @@ def driver():
     preamble, body = separate_body(text)
 
     math, body = separate_math(body)
-#    print math
-#    print body
+#    print(math)
+#    print(body)
 
     math = [str(m) for m in math]
 #    math = "\n".join(math)
@@ -332,7 +333,9 @@ def driver():
     math = [reformat_escapes_math(piece) for piece in math]
     text = place_p_tags(text)
 
-    text = insert_header(text)
+    # TODO temporarily remove header
+    #text = insert_header(text)
+
     text = clean_extra_newlines(text)
 
 #    debug_out2 = open("postdebugger.txt", "w")
@@ -350,7 +353,7 @@ def driver():
     out.write(text)
 
     out.close()
-    print "The output is now in " + str(outputfile)
+    print("The output is now in " + str(outputfile))
 
 
 
