@@ -1,9 +1,7 @@
 # latex2jax
 
 import re
-from sys import argv
-
-
+import sys
 
 
 def extract_title(textbody):
@@ -47,7 +45,7 @@ def separate_body(textbody):
     doc = begin_end_doc_re.split(textbody)
     if len(doc) == 1:
         preamble = None
-        body = doc
+        body = doc[0]
     else:
         preamble = doc[0]
         body = doc[1]
@@ -281,14 +279,13 @@ def insert_header(body): #TODO docstring
     return text
 
 
-
-def driver():
+def get_input_output_files():
     inputfile = "input.tex"
     outputfile = "output.html"
-    if len(argv) > 1 :
-        inputfile = argv[1]
-        if len(argv) > 2 :
-            outputfile = argv[2]
+    if len(sys.argv) > 1 :
+        inputfile = sys.argv[1]
+        if len(sys.argv) > 2 :
+            outputfile = sys.argv[2]
         else :
             if inputfile[-4:] == ".tex":
                 outputfile = inputfile.replace(".tex",".html")
@@ -296,36 +293,43 @@ def driver():
                 outputfile = inputfile.replace(".md", ".html")
             else:
                 outputfile = inputfile + ".html"
+    return inputfile, outputfile
 
-    f = open(inputfile)
-    text = f.read()
-    f.close()
+
+def driver(use_stdin_stdout=False, use_rawinput_stdout=False, rawinput=None):
+    if use_stdin_stdout:
+        text = sys.stdin.read()
+        outputfile = None
+    elif use_rawinput_stdout:
+        if rawinput is None:
+            raise KeyError("Rawinput is empty.")
+        text = rawinput
+        outputfile = None
+    else:
+        inputfile, outputfile = get_input_output_files()
+        with open(inputfile, "r") as f:
+            text = f.read()
 
     title = extract_title(text)
-#    print(title)
 
     text = reformat_escapes_prelim(text)
     text = reformat_accents(text)
 
     text = clean_whitespace(text)
+    print(title)
     preamble, body = separate_body(text)
+    print(preamble)
+    print(body)
 
     math, body = separate_math(body)
-#    print(math)
-#    print(body)
 
     math = [str(m) for m in math]
-#    math = "\n".join(math)
     body = [str(t) for t in body]
-#    body = "\n".join(body)
 
     # Reconcatenate the text with placeholders for math.
     text = body[0]
     for i in range(len(math)):
         text = text + "__math"+str(i)+"__" + body[i+1]
-
-#    debug_out = open("debugger.txt", "w")
-#    debug_out.write(text)
 
     # Handle theorem environments, I suppose.
     text = handle_environments(text)
@@ -338,24 +342,22 @@ def driver():
 
     text = clean_extra_newlines(text)
 
-#    debug_out2 = open("postdebugger.txt", "w")
-#    debug_out2.write(text)
-
     # Replace math into text
     for i in range(len(math)):
         text = text.replace("__math"+str(i)+"__", math[i])
 
-    out = open(outputfile, "w")
-    #out.write(title + "\n\n" + preamble + "\n\n" + body)
-    #out.write(title + "\n\n" + preamble + "\n\n")
-#    out.write(math)
-#    out.write(body)
-    out.write(text)
+    if outputfile is None:
+        print(text)
+        return
 
-    out.close()
+    with open(outputfile, "w") as out:
+        #out.write(title + "\n\n" + preamble + "\n\n" + body)
+        #out.write(title + "\n\n" + preamble + "\n\n")
+    #    out.write(math)
+    #    out.write(body)
+        out.write(text)
     print("The output is now in " + str(outputfile))
-
-
+    return
 
 
 if __name__=="__main__":
