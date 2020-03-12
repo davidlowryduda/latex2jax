@@ -114,20 +114,32 @@ def reformat_accents(body):
         body = body.replace(s1, s2)
     return body
 
-fontstyle = {
-  r'{\em ' : 'em',
-  r'{\bf ' : 'b',
-  r'{\it ' : 'i',
-  r'{\sl ' : 'i',
-  r'\textit{' : 'i',
-  r'\textsl{' : 'i',
-  r'\emph{' : 'em',
-  r'\textbf{' : 'b',
+FONTSTYLES = {
+#  r'{\em ' : 'em',
+#  r'{\bf ' : 'b',
+#  r'{\it ' : 'i',
+#  r'{\sl ' : 'i',
+  r'\\textit{' : 'i',
+#  r'\textsl{' : 'i',
+  r'\\emph{' : 'em',
+  r'\\textbf{' : 'strong',
 }
-#TODO reformat_fontstyles
 def reformat_fontstyles(body):
     """Replace TeX fontstyles with HTML fontstyles"""
-    pass
+    meat_re = re.compile(r"{([^}]*)}")
+    for key, val in FONTSTYLES.items():
+        regex = key + r"[^}]*}"
+        emph_re = re.compile(regex)
+        matches = emph_re.findall(body)
+        nonmatches = emph_re.split(body)
+        ret = []
+        for match in matches:
+            ret.append(nonmatches.pop(0))
+            matchstring = "<{}>{}</{}>".format(val, meat_re.findall(match)[0], val)
+            ret.append(matchstring)
+        ret.append(nonmatches[0])
+        body = ''.join(ret)
+    return body
 
 #TODO reformat_subsections
 def reformat_sections(body):
@@ -316,10 +328,10 @@ def driver(use_stdin_stdout=False, use_rawinput_stdout=False, rawinput=None):
     text = reformat_accents(text)
 
     text = clean_whitespace(text)
-    print(title)
+    #print(title)
     preamble, body = separate_body(text)
-    print(preamble)
-    print(body)
+    #print(preamble)
+    #print(body)
 
     math, body = separate_math(body)
 
@@ -331,9 +343,9 @@ def driver(use_stdin_stdout=False, use_rawinput_stdout=False, rawinput=None):
     for i in range(len(math)):
         text = text + "__math"+str(i)+"__" + body[i+1]
 
-    # Handle theorem environments, I suppose.
     text = handle_environments(text)
     text = reformat_escapes_text(text)
+    text = reformat_fontstyles(text)
     math = [reformat_escapes_math(piece) for piece in math]
     text = place_p_tags(text)
 
