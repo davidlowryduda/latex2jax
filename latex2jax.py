@@ -359,8 +359,7 @@ def driver(use_stdin_stdout=False, use_rawinput_stdout=False, rawinput=None):
         text = text.replace("__math"+str(i)+"__", math[i])
 
     if outputfile is None:
-        print(text)
-        return
+        return title, preamble, text
 
     with open(outputfile, "w") as out:
         #out.write(title + "\n\n" + preamble + "\n\n" + body)
